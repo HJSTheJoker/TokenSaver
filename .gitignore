@@ -1,0 +1,11 @@
+.DS_Store
+.build/
+DerivedData/
+Packages/
+*.xcodeproj
+*.xcworkspace
+*.swp
+*.zip
+TokenSaver.app
+/.swiftpm/
+/.github/.DS_Store
