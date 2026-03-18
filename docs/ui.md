@@ -7,7 +7,9 @@ TokenSaver is inspired by CodexBar’s compact menu-bar style.
 - Today saved
 - 30d saved
 - Runs
-- Compression
+- Source split
+- Big-model compression
+- Local input reduction
 - Model
 - Last updated
 

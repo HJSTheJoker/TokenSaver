@@ -2,8 +2,8 @@ import Foundation
 
 public struct TokenSaverWidgetSnapshot: Codable, Equatable, Sendable {
     public let generatedAt: Date
-    public let todaySavedTokens: Int
-    public let last30DaysSavedTokens: Int
+    public let todayBigModelTokensSaved: Int
+    public let last30DaysBigModelTokensSaved: Int
     public let successRate: Double
     public let totalRuns: Int
     public let latestModel: String?
@@ -11,8 +11,8 @@ public struct TokenSaverWidgetSnapshot: Codable, Equatable, Sendable {
 
     public init(summary: TokenSaverSummary, generatedAt: Date = Date()) {
         self.generatedAt = generatedAt
-        self.todaySavedTokens = summary.todaySavedTokens
-        self.last30DaysSavedTokens = summary.last30DaysSavedTokens
+        self.todayBigModelTokensSaved = summary.todayBigModelTokensSaved
+        self.last30DaysBigModelTokensSaved = summary.last30DaysBigModelTokensSaved
         self.successRate = summary.successRate
         self.totalRuns = summary.totalRuns
         self.latestModel = summary.latestModel

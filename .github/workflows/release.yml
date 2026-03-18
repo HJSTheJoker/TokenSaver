@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release tag to package and publish
+        required: true
+        default: v0.1.0
+
+jobs:
+  package-and-release:
+    runs-on: macos-14
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "value=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package app bundle
+        run: ./Scripts/package_app.sh "${{ steps.version.outputs.value }}"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          NOTES_FILE="docs/releases/${VERSION}.md"
+          ZIP_PATH="dist/TokenSaver-${VERSION}-macos-arm64.zip"
+          CHECKSUM_PATH="${ZIP_PATH}.sha256"
+
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            gh release upload "$VERSION" "$ZIP_PATH" "$CHECKSUM_PATH" --clobber
+            exit 0
+          fi
+
+          if [[ -f "$NOTES_FILE" ]]; then
+            gh release create "$VERSION" \
+              --title "TokenSaver ${VERSION}" \
+              --notes-file "$NOTES_FILE" \
+              "$ZIP_PATH" \
+              "$CHECKSUM_PATH"
+          else
+            gh release create "$VERSION" \
+              --title "TokenSaver ${VERSION}" \
+              --generate-notes \
+              "$ZIP_PATH" \
+              "$CHECKSUM_PATH"
+          fi

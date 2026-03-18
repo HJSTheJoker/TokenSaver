@@ -7,9 +7,11 @@ TokenSaver is local-first.
 - timestamp
 - run status
 - model name
-- bytes and line counts
+- raw input bytes, small-model input bytes, and summary output bytes
+- raw line counts
 - estimated token counts
-- estimated savings
+- estimated big-model savings
+- estimated small-model input reduction
 - run duration
 - blocker category
 
@@ -26,3 +28,5 @@ The installer creates a timestamped backup under:
 - `~/.codex/backups/tokensaver-bootstrap/<timestamp>/`
 
 before changing any live setup files.
+
+It backs up both raw `distill` and `safe-distill` entrypoints before patching them.

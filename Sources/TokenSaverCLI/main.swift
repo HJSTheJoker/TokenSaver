@@ -51,11 +51,13 @@ enum TokenSaverCLI {
         }
 
         print("TokenSaver")
-        print("Today saved: ~\(TokenSaverFormatting.compactInt(summary.todaySavedTokens)) tokens")
-        print("7d saved: ~\(TokenSaverFormatting.compactInt(summary.last7DaysSavedTokens)) tokens")
-        print("30d saved: ~\(TokenSaverFormatting.compactInt(summary.last30DaysSavedTokens)) tokens")
+        print("Today saved: ~\(TokenSaverFormatting.compactInt(summary.todayBigModelTokensSaved)) tokens")
+        print("7d saved: ~\(TokenSaverFormatting.compactInt(summary.last7DaysBigModelTokensSaved)) tokens")
+        print("30d saved: ~\(TokenSaverFormatting.compactInt(summary.last30DaysBigModelTokensSaved)) tokens")
         print("Runs: \(summary.successfulRuns) ok / \(summary.blockedRuns) blocked / \(summary.failedRuns) failed")
-        print("Compression: \(TokenSaverFormatting.ratio(summary.averageCompressionRatio))")
+        print("Source split: distill ~\(TokenSaverFormatting.compactInt(summary.distillBreakdown.bigModelTokensSaved)) / safe-distill ~\(TokenSaverFormatting.compactInt(summary.safeDistillBreakdown.bigModelTokensSaved))")
+        print("Big-model compression: \(TokenSaverFormatting.ratio(summary.averageBigModelCompressionRatio))")
+        print("Small-model reduction: \(TokenSaverFormatting.ratio(summary.averageSmallModelInputReductionRatio))")
         print("Success rate: \(TokenSaverFormatting.percent(summary.successRate))")
         print("Model: \(summary.latestModel ?? "unknown")")
         print("Last updated: \(TokenSaverFormatting.relativeDate(summary.lastUpdated))")
@@ -65,15 +67,13 @@ enum TokenSaverCLI {
         let root = TokenSaverPaths.eventsRoot()
         let backupRoot = TokenSaverPaths.backupRoot()
         let eventCount = TokenSaverStore.loadEvents(root: root).count
-        let safeDistill = SafeDistillInstaller.safeDistillURL
-        let safeDistillContents = (try? String(contentsOf: safeDistill, encoding: .utf8)) ?? ""
-
         print("TokenSaver doctor")
         print("Events root: \(root.path)")
         print("Events present: \(eventCount)")
         print("Backups root: \(backupRoot.path)")
         print("Latest backup: \(FileBackupManager.latestManifest()?.backupTimestamp ?? "none")")
-        print("safe-distill hook installed: \(safeDistillContents.contains("TOKENSAVER EVENT EMITTER BEGIN") ? "yes" : "no")")
+        print("distill hook installed: \(SafeDistillInstaller.distillHookInstalled() ? "yes" : "no")")
+        print("safe-distill hook installed: \(SafeDistillInstaller.safeDistillHookInstalled() ? "yes" : "no")")
         print("Widget snapshot: \(TokenSaverPaths.widgetSnapshotURL().path)")
     }
 

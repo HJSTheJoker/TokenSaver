@@ -32,8 +32,8 @@ struct TokenSaverWidget: Widget {
             VStack(alignment: .leading, spacing: 6) {
                 Text("TokenSaver")
                     .font(.headline)
-                Text("Today: ~\(TokenSaverFormatting.compactInt(entry.snapshot.todaySavedTokens))")
-                Text("30d: ~\(TokenSaverFormatting.compactInt(entry.snapshot.last30DaysSavedTokens))")
+                Text("Today: ~\(TokenSaverFormatting.compactInt(entry.snapshot.todayBigModelTokensSaved))")
+                Text("30d: ~\(TokenSaverFormatting.compactInt(entry.snapshot.last30DaysBigModelTokensSaved))")
                 Text("Success: \(TokenSaverFormatting.percent(entry.snapshot.successRate))")
                     .foregroundStyle(.secondary)
             }

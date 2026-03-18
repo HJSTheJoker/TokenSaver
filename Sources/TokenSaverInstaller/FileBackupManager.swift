@@ -12,11 +12,12 @@ public enum FileBackupManager {
         var manifestFiles: [BackupManifestFile] = []
         for file in files {
             let destination = backupRoot.appendingPathComponent(file.relativeBackupPath, isDirectory: false)
+            let resolvedSource = file.source.resolvingSymlinksInPath()
             try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
             try FileManager.default.copyItem(at: file.source, to: destination)
 
-            let sourceAttributes = try FileManager.default.attributesOfItem(atPath: file.source.path)
-            let data = try Data(contentsOf: destination)
+            let sourceAttributes = try FileManager.default.attributesOfItem(atPath: resolvedSource.path)
+            let data = try Data(contentsOf: resolvedSource)
             let hash = SHA256.hash(data: data).compactMap { String(format: "%02x", $0) }.joined()
             let modified = (sourceAttributes[.modificationDate] as? Date) ?? now
             let size = (sourceAttributes[.size] as? NSNumber)?.intValue ?? data.count

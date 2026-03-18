@@ -10,7 +10,7 @@
 
 ## Data flow
 
-1. `safe-distill` emits compact JSONL events to `~/.codex/tokensaver/events/YYYY/MM/DD.jsonl`.
+1. raw `distill` and `safe-distill` emit compact JSONL events to `~/.codex/tokensaver/events/YYYY/MM/DD.jsonl`.
 2. `TokenSaverCore` scans those events and builds a rolled-up summary.
 3. The CLI prints the summary directly.
 4. The app reads the summary and writes a widget snapshot.
@@ -18,6 +18,6 @@
 
 ## Product boundaries
 
-- TokenSaver is additive to the existing `safe-distill` path.
-- TokenSaver does not replace `safe-distill`.
+- TokenSaver is additive to the existing `distill` and `safe-distill` paths.
+- TokenSaver does not replace either path.
 - V1 does not include a database, billing reconciliation, or web scraping.

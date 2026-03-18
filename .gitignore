@@ -9,3 +9,4 @@ Packages/
 TokenSaver.app
 /.swiftpm/
 /.github/.DS_Store
+dist/

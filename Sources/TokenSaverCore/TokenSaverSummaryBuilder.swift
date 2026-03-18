@@ -15,16 +15,28 @@ public enum TokenSaverSummaryBuilder {
         var successfulRuns = 0
         var blockedRuns = 0
         var failedRuns = 0
-        var ratios: [Double] = []
-        var dayBuckets: [String: (savedTokens: Int, runs: Int)] = [:]
+        var bigModelRatios: [Double] = []
+        var smallModelRatios: [Double] = []
+        var sourceBuckets: [TokenSaverSource: (runCount: Int, savedTokens: Int)] = [:]
+        var dayBuckets: [String: (savedTokens: Int, runs: Int, distillTokensSaved: Int, safeDistillTokensSaved: Int)] = [:]
 
         let formatter = dayFormatter
 
         for event in sorted {
             let eventDayStart = calendar.startOfDay(for: event.timestamp)
             let dayKey = formatter.string(from: eventDayStart)
-            let existing = dayBuckets[dayKey] ?? (0, 0)
-            dayBuckets[dayKey] = (existing.savedTokens + max(0, event.estimatedTokensSaved), existing.runs + 1)
+            let existing = dayBuckets[dayKey] ?? (0, 0, 0, 0)
+            let saved = max(0, event.estimatedBigModelTokensSaved)
+            let distillSaved = event.source == .distill ? saved : 0
+            let safeSaved = event.source == .safeDistill ? saved : 0
+            dayBuckets[dayKey] = (
+                existing.savedTokens + saved,
+                existing.runs + 1,
+                existing.distillTokensSaved + distillSaved,
+                existing.safeDistillTokensSaved + safeSaved
+            )
+            let sourceExisting = sourceBuckets[event.source] ?? (0, 0)
+            sourceBuckets[event.source] = (sourceExisting.runCount + 1, sourceExisting.savedTokens + saved)
 
             switch event.status {
             case .ok:
@@ -37,38 +49,50 @@ public enum TokenSaverSummaryBuilder {
                 break
             }
 
-            if event.rawBytes > 0 {
-                ratios.append(1 - min(1, Double(event.excerptBytes) / Double(event.rawBytes)))
+            if event.rawInputBytes > 0 {
+                bigModelRatios.append(1 - min(1, Double(event.summaryOutputBytes) / Double(event.rawInputBytes)))
+                smallModelRatios.append(1 - min(1, Double(event.smallModelInputBytes) / Double(event.rawInputBytes)))
             }
 
             if eventDayStart == todayStart {
-                todaySavedTokens += max(0, event.estimatedTokensSaved)
+                todaySavedTokens += saved
             }
             if eventDayStart >= sevenDaysAgo {
-                last7DaysSavedTokens += max(0, event.estimatedTokensSaved)
+                last7DaysSavedTokens += saved
             }
             if eventDayStart >= thirtyDaysAgo {
-                last30DaysSavedTokens += max(0, event.estimatedTokensSaved)
+                last30DaysSavedTokens += saved
             }
         }
 
         let daily = dayBuckets.keys.sorted().map { key in
-            let bucket = dayBuckets[key] ?? (0, 0)
-            return TokenSaverDailyPoint(day: key, savedTokens: bucket.savedTokens, runs: bucket.runs)
+            let bucket = dayBuckets[key] ?? (0, 0, 0, 0)
+            return TokenSaverDailyPoint(
+                day: key,
+                bigModelTokensSaved: bucket.savedTokens,
+                runs: bucket.runs,
+                distillTokensSaved: bucket.distillTokensSaved,
+                safeDistillTokensSaved: bucket.safeDistillTokensSaved)
         }
-
-        let averageCompressionRatio = ratios.isEmpty ? 0 : ratios.reduce(0, +) / Double(ratios.count)
+        let sourceBreakdown = TokenSaverSource.allCases.map { source in
+            let bucket = sourceBuckets[source] ?? (0, 0)
+            return TokenSaverSourceSummary(source: source, runCount: bucket.runCount, bigModelTokensSaved: bucket.savedTokens)
+        }
+        let averageBigModelCompressionRatio = bigModelRatios.isEmpty ? 0 : bigModelRatios.reduce(0, +) / Double(bigModelRatios.count)
+        let averageSmallModelInputReductionRatio = smallModelRatios.isEmpty ? 0 : smallModelRatios.reduce(0, +) / Double(smallModelRatios.count)
 
         return TokenSaverSummary(
-            todaySavedTokens: todaySavedTokens,
-            last7DaysSavedTokens: last7DaysSavedTokens,
-            last30DaysSavedTokens: last30DaysSavedTokens,
+            todayBigModelTokensSaved: todaySavedTokens,
+            last7DaysBigModelTokensSaved: last7DaysSavedTokens,
+            last30DaysBigModelTokensSaved: last30DaysSavedTokens,
             successfulRuns: successfulRuns,
             blockedRuns: blockedRuns,
             failedRuns: failedRuns,
-            averageCompressionRatio: averageCompressionRatio,
+            averageBigModelCompressionRatio: averageBigModelCompressionRatio,
+            averageSmallModelInputReductionRatio: averageSmallModelInputReductionRatio,
             latestModel: sorted.first?.model,
             lastUpdated: sorted.first?.timestamp,
+            sourceBreakdown: sourceBreakdown,
             daily: daily)
     }
 
